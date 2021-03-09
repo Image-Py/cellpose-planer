@@ -59,31 +59,6 @@ def cp_backend_test():
 
     show(img, asnumpy(msk))
 
-def cp_backend_test():
-    print('cupy backend test:')
-    import cupy as cp
-    import cupyx.scipy.ndimage as cpimg
-    engine(cp, cpimg)
-
-    img = gravel()
-    x = img.astype(np.float32)/255
-    
-    start = time()
-    flow, prob, style = cellpose.get_flow(x, [0,0])
-    print('\tnet time first time (need preheat):', time()-start)
-    start = time()
-    flow, prob, style = cellpose.get_flow(x, [0,0])
-    print('\tnet time second time (faster):', time()-start)
-    
-    start = time()
-    msk = cellpose.flow2msk(flow * (5/1.5), None, 1, 20, 100)
-    print('\tflow time first time (need preheat):', time()-start)
-    start = time()
-    msk = cellpose.flow2msk(flow * (5/1.5), None, 1, 20, 100)
-    print('\tflow time second time (faster):', time()-start)
-
-    show(img, asnumpy(msk))
-
 def resize_test():
     print('\nresize test:')
     img = coins()
