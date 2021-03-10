@@ -83,6 +83,6 @@ def large_tile_test():
     
 if __name__ == '__main__':
     np_backend_test()
-    cp_backend_test()
+    # cp_backend_test()
     resize_test()
     large_tile_test()
