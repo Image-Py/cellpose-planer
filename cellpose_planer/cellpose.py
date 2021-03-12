@@ -24,6 +24,8 @@ def get_flow(nets, img, cn=[0,0], size=0, work=1):
    img = np.asarray(img)[None, cn, :, :]
    h, w = img.shape[-2:]
    if size>0: img = resize(img, (size,size))
+   dh, dw = (64-h%64)%64*(size==0), (64-w%64)%64*(size==0)
+   if max(dh,dw)>0: img = np.pad(img, [(0,0),(0,0),(0,dh),(0,dw)], 'edge')
    y = np.zeros((1,3)+img.shape[2:], img.dtype)
    style = np.zeros((1,256), img.dtype)
    def one(net, img):
@@ -36,9 +38,9 @@ def get_flow(nets, img, cn=[0,0], size=0, work=1):
       pool.shutdown(wait=True)
    else:
       for net in nets: one(net, img)
-      
    if len(nets)>0:
       y /= len(nets); style /= len(nets)
+   if max(dh, dw)>0: y = y[:,:,:h,:w]
    if size>0: y = resize(y, (h, w))
    flow = y[0,:2].transpose(1,2,0)
    return flow, y[0,2], style
