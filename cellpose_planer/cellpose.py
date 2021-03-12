@@ -1,31 +1,44 @@
 from planer import read_net, resize
-import numpy as np
+#import numpy as np
+#import scipy.ndimage as ndimg
 import random, math, itertools
-import scipy.ndimage as ndimg
+from tqdm import tqdm
 
 import os.path as osp
 root = osp.abspath(osp.dirname(__file__))
 
-try:
-   from tqdm import tqdm
-   def progress(n, i, bar=[None]):
-      if bar[0] is None:
-         bar[0] = tqdm()
-      bar[0].total = n
-      bar[0].update(1)
-      if n==i: bar[0] = None
-except: progress = print
+def progress(n, i, bar=[None]):
+   if bar[0] is None:
+      bar[0] = tqdm()
+   bar[0].total = n
+   bar[0].update(1)
+   if n==i: bar[0] = None
 
-def load(path):
-   global net
-   net = read_net(root+'/models/'+path)
+def load_model(names='cyto_0'):
+   if isinstance(names, str): return read_net(root+'/models/'+names)
+   return [read_net(root+'/models/'+i) for i in names]
 
-def get_flow(img, cn=[0,0], size=0):
+def get_flow(nets, img, cn=[0,0], size=0, work=1):
+   if not isinstance(nets, list): nets = [nets]
    if img.ndim==2: img = img[None,:,:]
    img = np.asarray(img)[None, cn, :, :]
    h, w = img.shape[-2:]
    if size>0: img = resize(img, (size,size))
-   y, style = net(img)
+   y = np.zeros((1,3)+img.shape[2:], img.dtype)
+   style = np.zeros((1,256), img.dtype)
+   def one(net, img):
+      i, s = net(img)
+      y[:] += i; style[:] += s
+   if work>1 and len(nets)>1:
+      from concurrent.futures import ThreadPoolExecutor
+      pool = ThreadPoolExecutor(max_workers=work, thread_name_prefix="flow")
+      for net in nets: pool.submit(one, net, img)
+      pool.shutdown(wait=True)
+   else:
+      for net in nets: one(net, img)
+      
+   if len(nets)>0:
+      y /= len(nets); style /= len(nets)
    if size>0: y = resize(y, (h, w))
    flow = y[0,:2].transpose(1,2,0)
    return flow, y[0,2], style
@@ -38,7 +51,8 @@ def grid_slice(H, W, size, mar):
     a, b = make_slice(H, size, mar), make_slice(W, size, mar)
     return list(itertools.product(a, b))
 
-def tile_flow(img, cn=[0,0], sample=1, size=512, work=1, callback=progress):
+def tile_flow(nets, img, cn=[0,0], sample=1, size=512, work=1, callback=progress):
+   if not isinstance(nets, list): nets = [nets]
    if img.ndim==2: img = np.asarray(img[None,:,:])[cn]
    (_, H, W), k = img.shape, sample; h, w = int(H*k), int(W*k)
    simg = img if sample==1 else resize(img[:,:,:], (h, w))
@@ -48,7 +62,7 @@ def tile_flow(img, cn=[0,0], sample=1, size=512, work=1, callback=progress):
    flow = np.zeros((3, h+dh, w+dw), dtype=simg.dtype)
    count = np.zeros(simg.shape[1:], 'uint8')
    def one(sr, sc, s=[0]):
-      flw, prob, _ = get_flow(simg[:,sr,sc], slice(None))
+      flw, prob, _ = get_flow(nets, simg[:,sr,sc], slice(None))
       flow[:2, sr, sc] += flw.transpose(2,0,1)
       flow[2, sr, sc] += prob
       count[sr, sc] += 1
@@ -89,3 +103,7 @@ def flow2msk(flow, prob, grad=1.0, area=150, volume=500):
     return lut[lab].ravel()[rst].reshape(shp)
     return hist, lut[lab], mask
    
+if __name__ == '__main__':
+   from skimage.data import coins, gravel
+   net = load_model('cyto_0')
+   rst, style = get_flow(net, coins(), size=256)
