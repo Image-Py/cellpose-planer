@@ -24,7 +24,7 @@ try:
 except:
     import numpy as np
     import scipy.ndimage as ndimg
-    engine(cupy, ndimg)
+    engine(np, ndimg)
     print('using numpy engine, install cupy would be faster.')
 
 root = osp.abspath(osp.dirname(__file__))
