@@ -1,4 +1,4 @@
-import planer
+import numpy as np, planer
 from . import cellpose
 from .cellpose import load_model, get_flow, tile_flow, flow2msk
 from .render import msk2edge, rgb_mask, red_edge, flow2hsv, show
@@ -66,3 +66,20 @@ def download(names=['cyto_0','cyto_1','cyto_2','cyto_3']):
             lambda a,b,c,bar=bar: progress(a,b,c,bar))
         urlretrieve(models[name][:-3]+'json',
                     root+'/models/'+name+'.json')
+
+def test():
+    from time import time
+    from skimage.data import coins
+    img = coins()
+    x = img.astype(np.float32)/255
+    net = load_model('cyto_0')
+    start = time()
+    flow, prob, style = get_flow(net, x)
+    print('\tnet time:', time()-start)
+    start = time()
+    lab = flow2msk(flow, prob, level=0.2)
+    print('\tflow time:', time()-start)
+    flow = asnumpy(flow)
+    prob = asnumpy(prob)
+    lab = asnumpy(lab)
+    show(img, flow, prob, lab)

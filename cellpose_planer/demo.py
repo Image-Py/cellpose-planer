@@ -25,7 +25,7 @@ def np_backend_test():
     print('\tnet time:', time()-start)
 
     start = time()
-    lab = cellpp.flow2msk(flow, prob, out=0.2)
+    lab = cellpp.flow2msk(flow, prob, level=0.2)
     print('\tflow time:', time()-start)
 
     cellpp.show(img, flow, prob, lab)
@@ -48,10 +48,10 @@ def cp_backend_test():
     print('\tnet time second time (faster):', time()-start)
     
     start = time()
-    lab = cellpp.flow2msk(flow, prob, out=0.2)
+    lab = cellpp.flow2msk(flow, prob, level=0.2)
     print('\tflow time first time (need preheat):', time()-start)
     start = time()
-    lab = cellpp.flow2msk(flow, prob, out=0.2)
+    lab = cellpp.flow2msk(flow, prob, level=0.2)
     print('\tflow time second time (faster):', time()-start)
 
     flow, prob, lab = [cellpp.asnumpy(i) for i in (flow, prob, lab)]
@@ -90,7 +90,10 @@ def large_tile_test():
     cellpp.show(img, flow, prob, lab)
     
 if __name__ == '__main__':
+    '''
     np_backend_test()
     cp_backend_test()
     resize_test()
     large_tile_test()
+    '''
+    cellpp.test()

@@ -26,7 +26,7 @@ def get_flow(nets, img, cn=[0,0], size=0, work=1):
    h, w = img.shape[-2:]
    if size>0: img = resize(img, (size,size))
    dh, dw = (64-h%64)%64*(size==0), (64-w%64)%64*(size==0)
-   if max(dh,dw)>0: img = np.pad(img, [(0,0),(0,0),(0,dh),(0,dw)])
+   if max(dh,dw)>0: img = np.pad(img, [(0,0),(0,0),(0,dh),(0,dw)], 'constant')
    y = np.zeros((1,3)+img.shape[2:], img.dtype)
    style = np.zeros((1,256), img.dtype)
    def one(net, img):
@@ -61,7 +61,7 @@ def tile_flow(nets, img, cn=[0,0], sample=1, size=512, work=1, callback=progress
    (_, H, W), k = img.shape, sample; h, w = int(H*k), int(W*k)
    simg = img if sample==1 else resize(img[:,:,:], (h, w))
    dh, dw = max(size-h,0), max(size-w,0)
-   if max(dh,dw)>0: simg = np.pad(simg, [(0,0),(0,dh),(0,dw)])
+   if max(dh,dw)>0: simg = np.pad(simg, [(0,0),(0,dh),(0,dw)], 'constant')
    rcs = grid_slice(h+dh, w+dw, size, size//10)
    flow = np.zeros((3, h+dh, w+dw), dtype=simg.dtype)
    count = np.zeros(simg.shape[1:], 'uint8')
