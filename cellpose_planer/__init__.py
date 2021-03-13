@@ -1,7 +1,7 @@
 import planer
 from . import cellpose
 from .cellpose import load_model, get_flow, tile_flow, flow2msk
-from .render import msk2edge, rgb_mask
+from .render import msk2edge, rgb_mask, red_edge, flow2hsv, show
 from urllib.request import urlretrieve, urlopen
 
 from glob import glob
@@ -33,7 +33,7 @@ if not osp.exists(root+'/models'): os.mkdir(root+'/models')
 models = {}
 
 def search_models():
-    url = 'https://raw.githubusercontent.com/Image-Py/cellpose-planer/main/README.md'
+    url = 'http://release.imagepy.org/cellpose-planer/README.md'
     lines = urlopen(url).read().decode('utf-8').split('\n')
     global models
     for line in lines:

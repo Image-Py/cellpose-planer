@@ -1,5 +1,5 @@
 # Cellpose-Planer
-![logo](https://user-images.githubusercontent.com/24822467/110975224-5135d880-8314-11eb-9356-69c7a3611cde.png)
+![logo](https://user-images.githubusercontent.com/24822467/111028041-d8cd2700-83a8-11eb-9ffd-f362b39a0f24.png)
 
 [Cellpose](https://github.com/MouseLand/cellpose) is a generalist algorithm for cellular segmentation, Which written by Carsen Stringer and Marius Pachitariu.
 
@@ -20,23 +20,19 @@ Option: *pip install cupy-cuda101* on envidia gpu, install cuda and cupy would g
 
 # Usage
 ```python
-import cellpose as cellpp
+import cellpose_planer as cellpp
 from skimage.data import coins
 
 img = coins()
 x = img.astype(np.float32)/255
 
 net = cellpp.load_model('cyto_0')
-flow, prob, style = cellpp.get_flow(net, x, [0,0])
-msk = cellpp.flow2msk(flow * (5/1.5), None, 1, 20, 100)
+flow, prob, style = cellpp.get_flow(net, x)
+msk = cellpp.flow2msk(flow, prob)
 
-rgb = cellpp.rgb_mask(img, msk)
-
-plt.subplot(121).imshow(img)
-plt.subplot(122).imshow(rgb)
-plt.show()
+cellpp.show(img, flow, prob, msk)
 ```
-![coins](https://user-images.githubusercontent.com/24822467/110975016-1338b480-8314-11eb-84e4-4152e688d577.png)
+![demo](https://user-images.githubusercontent.com/24822467/111028247-4d549580-83aa-11eb-9bf4-2cb87332530e.png)
 
 ## 1. search and download models
 search the models you need, and download them. (just one time)
@@ -72,39 +68,75 @@ from skimage.data import coins, gravel
 
 # load one net, and input one image, two chanels index
 net = cellpp.load_model('cyto_0')
-flow, prob, style = cellpp.get_flow(net, gravel(), [0,0])
+flow, prob, style = cellpp.get_flow(net, coins(), [0,0])
 
 # you can also load many nets to got a mean output.
 nets = cellpp.load_model(['cyto_0', 'cyto_1', 'cyto_2', 'cyto_3'])
-flow, prob, style = cellpp.get_flow(net, gravel(), [0,0])
+flow, prob, style = cellpp.get_flow(net, coins(), [0,0])
 
 # size parameter force scale the image to size x size.
-flow, prob, style = cellpp.get_flow(net, gravel(), [0,0], size=480)
+flow, prob, style = cellpp.get_flow(net, coins(), [0,0], size=480)
 
 # we can open multi working thread to process each net.
 # only useful when multi nets input. (GPU not recommend)
-flow, prob, style = cellpp.get_flow(net, gravel(), [0,0], work=4)
+flow, prob, style = cellpp.get_flow(net, coins(), [0,0], work=4)
 ```
 
 ## 3. processing large image
+when process a large image, we need tile_flow to processing the image by tiles.
 ```python
-# processing large image by tiles.
-# sample: scale factor
-# size: tile's size
+# sample: scale factor, we can zoom image befor processing
+# size: tile's size, (512, 768, 1024 recommend)
 # work: number of threads (GPU not recommend)
-flow, prob, style = cellpp.tile_flow(net, x, sample=1, size=768, work=4)
+flow, prob, style = cellpp.tile_flow(net, x, sample=1, size=512, work=4)
 ```
 
 ## 4. flow to mask
+flow to mask is a water flow process. there are 4 parameters here:
+1. level: below level means background, where water can not flow. So level decide the outline.
+2. gradient: if the flow gradient is smaller than this value, we set it 0. became a watershed. bigger gradient threshold could suppress the over-segmentation. especially in narrow-long area.
+3. area: at end of the flow process, every watershed should be small enough. (<area)
+4. volume: and in small area, must contian a lot of water. (>volume)
 ```python
-# use the flow and prob to build the label
-# gradient threshold: the flow below gradient threshold become watershed.
-# area threshold: every watershed's area must be small enough
-# volume threshold: every watershed's volume must be big enough.
-msk = cellpp.flow2msk(flow * (5/1.5), prob, grad=1, area=20, volume=100)
+msk = cellpp.flow2msk(flow, prob, level=0.5, grad=0.5, area=None, volume=None)
 ```
+## 5. render
+cellpose-planer implements some render styles.
+```python
+import cellpose_planer as cellpp
+import matplotlib.pyplot as plt
 
-## 5. backend and performance
+fs = glob('./testimg/*.png')
+img = 255-imread(fs[10])
+x = img.astype(np.float32)/255
+
+net = cellpp.load_model()
+
+flow, prob, style = cellpp.get_flow(net, x)
+msk = cellpp.flow2msk(flow, prob)
+
+flow = cellpp.asnumpy(flow)
+prob = cellpp.asnumpy(prob)
+msk = cellpp.asnumpy(msk)
+
+# get edge from label msask
+edge = cellpp.msk2edge(msk)
+# get build flow as hsv 2 rgb
+hsv = cellpp.flow2hsv(flow)
+# 5 colors render (different in neighborhood)
+rgb = cellpp.rgb_mask(img, msk)
+# draw edge as red line
+line = cellpp.red_edge(img, edge)
+
+plt.subplot(221).imshow(img)
+plt.subplot(222).imshow(line)
+plt.subplot(223).imshow(hsv)
+plt.subplot(224).imshow(rgb)
+plt.show()
+```
+![cell](https://user-images.githubusercontent.com/24822467/111029250-93acf300-83b0-11eb-9e83-41bc0cf045dd.png) 
+
+## 6. backend and performance
 Planer can run with numpy or cupy backend, by default, cellpose-planer try to use cupy backend, if failed, use numpy backend. But we can change the backend manually. (if you switch backend, the net loaded befor would be useless, reload them pleanse)
 ```python
 import cellpose-planer as cellpp
@@ -122,7 +154,7 @@ cellpp.engine(cp, cpimg)
 
 then we do a test on a 1024 x 1024 image.
 ```python
-from skimage.data import coins, gravel
+from skimage.data import gravel
 img = np.tile(np.tile(gravel(), 2).T, 2).T
 x = img.astype(np.float32)/255
 
@@ -136,15 +168,12 @@ flow, prob, style = cellpp.get_flow(net, x, [0,0])
 print('\tnet time second time:', time()-start)
 
 # gpu need preheat, so run it befor timing
-msk = cellpp.flow2msk(flow * (5/1.5), None, 1, 20, 100)
+msk = cellpp.flow2msk(flow, prob, 1, 20, 100)
 start = time()
-msk = cellpp.flow2msk(flow * (5/1.5), None, 1, 20, 100)
+msk = cellpp.flow2msk(flow, prob, 1, 20, 100)
 print('\tflow time second time:', time()-start)
-
-show(img, cellpp.asnumpy(msk))
 ```
 here is the timing result on I7 CPU, 2070 GPU.
-![gravel](https://user-images.githubusercontent.com/24822467/110979607-ac1dfe80-8319-11eb-97d2-6d97f668ebfa.png)
 ```
 user switch engine: numpy
     net time second time: 11.590887069702148

@@ -1,5 +1,24 @@
 import random, numpy as np
 
+def flow2hsv(flow):
+    v = np.linalg.norm(flow, axis=-1)
+    h = np.arccos(flow[:,:,0]/v)
+    h *= np.sign(flow[:,:,1])/(np.pi*2)
+    h += 0.5; v /= v.max()
+    
+    s = np.ones_like(v)             
+    a = np.floor(h * 6)
+    b = h * 6; b -= a
+    p = np.zeros_like(v)
+    t = v * b; q = v - t
+    
+    buf = np.stack((v,t,p,q), -1).ravel()
+    idx = np.array([
+        [0,1,3],[3,0,2],[2,0,1], [2,3,0],[1,2,0],[0,2,3]])
+    idx = idx[a.ravel().astype(np.uint8) % 6]
+    idx += np.arange(v.size)[:,None] * 4
+    return buf[idx].reshape(v.shape+(3,))
+   
 def msk2edge(lab):
    msk = np.zeros(lab.shape, dtype=np.bool)
    mskr = lab[1:] != lab[:-1]
@@ -7,6 +26,12 @@ def msk2edge(lab):
    msk[1:] |= mskr; msk[:-1] |= mskr
    msk[:,1:] |= mskc; msk[:,:-1] |= mskc
    return msk
+
+def red_edge(img, edge):
+    lut = np.array([[0,0,0],[255,0,0]], dtype=np.uint8)
+    rgb = lut[edge.view(np.uint8)]
+    img = img.reshape((img.shape+(1,))[:3])
+    return np.maximum(img, rgb, out=rgb)
 
 def connect_graph(img):
     pair1 = np.concatenate((img[:-1,:,None], img[1:,:,None]), -1)
@@ -51,7 +76,7 @@ def node_render(conmap, n=5, rand=10, shuffle=True):
    for c in colors: lut[c] = colors[c]
    return lut
 
-def rgb_mask(img, lab, edge=None):
+def rgb_mask(img, lab):
    cmap = np.array([(0,0,0),(255,0,0),(0,255,0),
       (0,0,255),(255,255,0),(255,0,255)], dtype=np.uint8)
    idx = connect_graph(lab)
@@ -59,3 +84,11 @@ def rgb_mask(img, lab, edge=None):
    rgb = cmap[lut][lab]
    img = img.reshape((img.shape+(1,))[:3])
    return np.maximum(img, rgb, out=rgb)
+
+def show(img, flow, prob, lab):
+    import matplotlib.pyplot as plt
+    plt.subplot(221).imshow(img)
+    plt.subplot(222).imshow(red_edge(img, msk2edge(lab)))
+    plt.subplot(223).imshow(flow2hsv(flow))
+    plt.subplot(224).imshow(rgb_mask(img,lab))
+    plt.show()
