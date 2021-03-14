@@ -98,7 +98,7 @@ class Flow2Msk(Simple):
 
 class FlowRender(Simple):
     title = 'Render Original With Label'
-    note = ['8-bit']
+    note = ['8-bit', 'rgb']
     para = {'lab':None, 'rgb':True, 'line':True}
     view = [('img', 'lab', 'label', 'img'),
             (bool, 'rgb', 'rgb mask'),
