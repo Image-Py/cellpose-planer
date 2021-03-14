@@ -90,7 +90,7 @@ def rgb_mask(img, lab):
 def show(img, flowpb, lab):
     import matplotlib.pyplot as plt
     plt.subplot(221).imshow(img)
-    plt.subplot(222).imshow(red_edge(img, msk2edge(lab)))
+    plt.subplot(222).imshow(draw_edge(img, lab))
     plt.subplot(223).imshow(flow2hsv(flowpb[:,:,:2]))
     plt.subplot(224).imshow(rgb_mask(img,lab))
     plt.show()

@@ -3,7 +3,9 @@
 
 [Planer](https://github.com/Image-Py/planer) is a light-weight CNN framework implemented in pure Numpy-like interface. It can run only with Numpy. Or change different backends. (Cupy accelerated with CUDA, ClPy accelerated with OpenCL).
 
-So Cellpose-Planer is the **cellpose** models on **planer** framework. We generate onnx from torch models, then deduce it to planer model. **but we just use cellpose's models, we rewrite all the pre-after processing and render algorithm, So the result is not same as the official one**
+So Cellpose-Planer is the **cellpose** models on **planer** framework. We generate onnx from torch models, then deduce it to planer model. 
+
+**We just use cellpose's models, but we rewrite all the pre-after processing and render algorithm, So the result is not same as the official one**
 
 ## Features
 * cellpose-planer is very light, only depend on [Numpy](https://github.com/numpy/numpy) and Scipy.
@@ -25,14 +27,16 @@ img = coins()
 x = img.astype(np.float32)/255
 
 net = cellpp.load_model('cyto_0')
-flow, prob, style = cellpp.get_flow(net, x)
-msk = cellpp.flow2msk(flow, prob)
+flowpb, style = cellpp.get_flow(net, x, size=480)
+lab = cellpp.flow2msk(flowpb, level=0.2)
 
-cellpp.show(img, flow, prob, msk)
+flowpb = cellpp.asnumpy(flowpb)
+lab = cellpp.asnumpy(lab)
+cellpp.show(img, flowpb, lab)
 ```
 ![demo](https://user-images.githubusercontent.com/24822467/111028247-4d549580-83aa-11eb-9bf4-2cb87332530e.png)
 
-## 1. search and download models
+## first time: search and download models
 search the models you need, and download them. (just one time)
 ```python
 >>> import cellpose_planer as cellpp
@@ -60,81 +64,66 @@ download cyto_3 from http://release.imagepy.org/cellpose-planer/cyto_3.npy
 ['cyto_0', 'cyto_1', 'cyto_2', 'cyto_3']
 ```
 
-## 2. load models and run on your image
+## 1. load models
+you can load one model or more, when multi models, you would get a mean output.
 ```python
-from skimage.data import coins, gravel
-
-# load one net, and input one image, two chanels index
-net = cellpp.load_model('cyto_0')
-flow, prob, style = cellpp.get_flow(net, coins(), [0,0])
-
-# you can also load many nets to got a mean output.
+nets = cellpp.load_model('cyto_0')
 nets = cellpp.load_model(['cyto_0', 'cyto_1', 'cyto_2', 'cyto_3'])
-flow, prob, style = cellpp.get_flow(net, coins(), [0,0])
-
-# size parameter force scale the image to size x size.
-flow, prob, style = cellpp.get_flow(net, coins(), [0,0], size=480)
-
-# we can open multi working thread to process each net.
-# only useful when multi nets input. (GPU not recommend)
-flow, prob, style = cellpp.get_flow(net, coins(), [0,0], work=4)
 ```
 
-## 3. processing large image
-when process a large image, we need tile_flow to processing the image by tiles.
+## 2. get flow image
+**def get_flow(nets, img, cn=[0,0], sample=1, size=512, tile=True, work=1, callback=progress)**
+
+* *nets:* the nets loaded upon.
+
+* *img:* the image to process
+
+* *cn:* the cytoplasm and nucleus channels
+
+* *sample:* if not 1, we scale it. (only avalible when tile==True)
+
+* *size:* when tile==True, this is the tile size, when tile==False, we scale the image to size.
+
+* *tile:* if True, method try to process image in tiles. else resize the image.
+
+* *work:* open multi-thread to process the image. (GPU not recommend)
 ```python
-# sample: scale factor, we can zoom image befor processing
-# size: tile's size, (512, 768, 1024 recommend)
-# work: number of threads (GPU not recommend)
-flow, prob, style = cellpp.tile_flow(net, x, sample=1, size=512, work=4)
+flowpb, style = cellpp.get_flow(net, coins(), [0,0], work=4)
 ```
 
-## 4. flow to mask
-flow to mask is a water flow process. there are 4 parameters here:
-1. level: below level means background, where water can not flow. So level decide the outline.
-2. gradient: if the flow gradient is smaller than this value, we set it 0. became a watershed. bigger gradient threshold could suppress the over-segmentation. especially in narrow-long area.
-3. area: at end of the flow process, every watershed should be small enough. (<area)
-4. volume: and in small area, must contian a lot of water. (>volume)
+## 3. flow to mask
+**def flow2msk(flowpb, level=0.5, grad=0.5, area=None, volume=None)**
+
+* *flowpb:* get_flow 's output
+
+* *level:* below level means background, where water can not flow. So level decide the outline.
+
+* *grad:* if the flow gradient is smaller than this value, we set it 0. became a watershed. bigger gradient threshold could suppress the over-segmentation. especially in narrow-long area.
+
+* *area:* at end of the flow process, every watershed should be small enough. (<area), default is 0 (auto).
+
+* *volume:* and in small area, must contian a lot of water. (>volume), default is 0 (auto).
+
 ```python
-msk = cellpp.flow2msk(flow, prob, level=0.5, grad=0.5, area=None, volume=None)
+msk = cellpp.flow2msk(flowpb, level=0.5, grad=0.5, area=None, volume=None)
 ```
-## 5. render
+## 4. render
 cellpose-planer implements some render styles.
 ```python
 import cellpose_planer as cellpp
-import matplotlib.pyplot as plt
-
-fs = glob('./testimg/*.png')
-img = 255-imread(fs[10])
-x = img.astype(np.float32)/255
-
-net = cellpp.load_model()
-
-flow, prob, style = cellpp.get_flow(net, x)
-msk = cellpp.flow2msk(flow, prob)
-
-flow = cellpp.asnumpy(flow)
-prob = cellpp.asnumpy(prob)
-msk = cellpp.asnumpy(msk)
 
 # get edge from label msask
-edge = cellpp.msk2edge(msk)
+edge = cellpp.msk2edge(lab)
 # get build flow as hsv 2 rgb
 hsv = cellpp.flow2hsv(flow)
 # 5 colors render (different in neighborhood)
-rgb = cellpp.rgb_mask(img, msk)
+rgb = cellpp.rgb_mask(img, lab)
 # draw edge as red line
-line = cellpp.red_edge(img, edge)
-
-plt.subplot(221).imshow(img)
-plt.subplot(222).imshow(line)
-plt.subplot(223).imshow(hsv)
-plt.subplot(224).imshow(rgb)
-plt.show()
+line = cellpp.draw_edge(img, lab)
 ```
 ![cell](https://user-images.githubusercontent.com/24822467/111029250-93acf300-83b0-11eb-9e83-41bc0cf045dd.png) 
 
-## 6. backend and performance
+## 5. backend and performance
 Planer can run with numpy or cupy backend, by default, cellpose-planer try to use cupy backend, if failed, use numpy backend. But we can change the backend manually. (if you switch backend, the net loaded befor would be useless, reload them pleanse)
 ```python
 import cellpose-planer as cellpp
@@ -149,37 +138,15 @@ import cupy as cp
 import cupyx.scipy.ndimage as cpimg
 cellpp.engine(cp, cpimg)
 ```
-
-then we do a test on a 1024 x 1024 image.
-```python
-from skimage.data import gravel
-img = np.tile(np.tile(gravel(), 2).T, 2).T
-x = img.astype(np.float32)/255
-
-# set backend here ...
-
-net = cellpp.load_model('cyto_0')
-# gpu need preheat, so run it befor timing
-flow, prob, style = cellpp.get_flow(net, x, [0,0])
-start = time()
-flow, prob, style = cellpp.get_flow(net, x, [0,0])
-print('\tnet time second time:', time()-start)
-
-# gpu need preheat, so run it befor timing
-msk = cellpp.flow2msk(flow, prob, 1, 20, 100)
-start = time()
-msk = cellpp.flow2msk(flow, prob, 1, 20, 100)
-print('\tflow time second time:', time()-start)
-```
-here is the timing result on I7 CPU, 2070 GPU.
+here we time a 1024x1024 image on I7 CPU and 2070 GPU.
 ```
 user switch engine: numpy
-    net time second time: 11.590887069702148
-    flow time first time: 0.07978630065917969
+    net cost: 11.590
+    flow cost: 0.0797
 
 user switch engine: cupy
-	net time second time: 0.013962268829345703
-	flow time second time: 0.009973287582397461
+    net cost: 0.0139
+    flow cost: 0.009
 ```
 
 # Model deducing and releasing
@@ -210,3 +177,7 @@ if you want to share your model in cellpose-planer, just upload the json and npy
 | nuclei_3  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/nuclei_3.npy) |
 
  *cellpp.search_models function pull the text below and parse them, welcom to release your models here!*
+
+ ## Use cellpose-planer as ImagePy plugins
+ cellpose-planer can also start as ImagePy's plugins. supporting interactive and bat processing.
+ ![image](https://user-images.githubusercontent.com/24822467/111069844-ce339000-8483-11eb-9dce-caa8f6ab80af.png)

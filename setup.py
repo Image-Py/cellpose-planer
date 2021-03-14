@@ -4,7 +4,7 @@ descr = """Cellpose-Planer is the cellpose models on planer framework"""
 
 if __name__ == '__main__':
     setup(name='cellpose-planer',
-        version='0.13',
+        version='0.14',
         url='https://github.com/Image-Py/cellpose-planer',
         description='Cellpose-Planer is the cellpose models on planer framework',
         long_description=descr,
