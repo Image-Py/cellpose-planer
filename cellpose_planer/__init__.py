@@ -1,7 +1,8 @@
 import numpy as np, planer
 from . import cellpose
-from .cellpose import load_model, get_flow, tile_flow, flow2msk
-from .render import msk2edge, rgb_mask, red_edge, flow2hsv, show
+from .cellpose import load_model, count_flow, get_flow, flow2msk
+from .render import msk2edge, rgb_mask, draw_edge, flow2hsv, show
+from .demo import mini_test, tile_test
 from urllib.request import urlretrieve, urlopen
 
 from glob import glob
@@ -49,7 +50,7 @@ def search_models():
     
 def list_models():
     fs = glob(root+'/models/*.npy')
-    print([osp.split(i)[1][:-4] for i in fs])
+    return [osp.split(i)[1][:-4] for i in fs]
 
 def progress(a, b, c, bar):
     per = int(min(100.0 * a * b / c, 100))

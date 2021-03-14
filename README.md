@@ -1,11 +1,9 @@
 # Cellpose-Planer
-![logo](https://user-images.githubusercontent.com/24822467/111028041-d8cd2700-83a8-11eb-9ffd-f362b39a0f24.png)
-
 [Cellpose](https://github.com/MouseLand/cellpose) is a generalist algorithm for cellular segmentation, Which written by Carsen Stringer and Marius Pachitariu.
 
 [Planer](https://github.com/Image-Py/planer) is a light-weight CNN framework implemented in pure Numpy-like interface. It can run only with Numpy. Or change different backends. (Cupy accelerated with CUDA, ClPy accelerated with OpenCL).
 
-So Cellpose-Planer is the **cellpose** models on **planer** framework. We generate onnx from torch models, then deduce it to planer model.
+So Cellpose-Planer is the **cellpose** models on **planer** framework. We generate onnx from torch models, then deduce it to planer model. **but we just use cellpose's models, we rewrite all the pre-after processing and render algorithm, So the result is not same as the official one**
 
 ## Features
 * cellpose-planer is very light, only depend on [Numpy](https://github.com/numpy/numpy) and Scipy.

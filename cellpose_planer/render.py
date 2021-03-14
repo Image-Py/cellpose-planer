@@ -13,6 +13,7 @@ def flow2hsv(flow):
     t = v * b; q = v - t
     
     buf = np.stack((v,t,p,q), -1).ravel()
+    buf *= 255; buf = buf.astype(np.uint8)
     idx = np.array([
         [0,1,3],[3,0,2],[2,0,1], [2,3,0],[1,2,0],[0,2,3]])
     idx = idx[a.ravel().astype(np.uint8) % 6]
@@ -27,8 +28,9 @@ def msk2edge(lab):
    msk[:,1:] |= mskc; msk[:,:-1] |= mskc
    return msk
 
-def red_edge(img, edge):
-    lut = np.array([[0,0,0],[255,0,0]], dtype=np.uint8)
+def draw_edge(img, lab, color=(255,0,0)):
+    edge = msk2edge(lab)
+    lut = np.array([[0,0,0],color], dtype=np.uint8)
     rgb = lut[edge.view(np.uint8)]
     img = img.reshape((img.shape+(1,))[:3])
     return np.maximum(img, rgb, out=rgb)
@@ -85,10 +87,10 @@ def rgb_mask(img, lab):
    img = img.reshape((img.shape+(1,))[:3])
    return np.maximum(img, rgb, out=rgb)
 
-def show(img, flow, prob, lab):
+def show(img, flowpb, lab):
     import matplotlib.pyplot as plt
     plt.subplot(221).imshow(img)
     plt.subplot(222).imshow(red_edge(img, msk2edge(lab)))
-    plt.subplot(223).imshow(flow2hsv(flow))
+    plt.subplot(223).imshow(flow2hsv(flowpb[:,:,:2]))
     plt.subplot(224).imshow(rgb_mask(img,lab))
     plt.show()
