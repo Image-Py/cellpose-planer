@@ -17,7 +17,7 @@ class Download(Free):
 
     def run(self, para):
         models = [i[:20].strip() for i in para['models']]
-        cellpp.download(models)
+        cellpp.download(models, self.app.info, self.progress)
         self.app.alert('Download models successfully!')
 
 class CountFlow(Simple):
@@ -37,6 +37,7 @@ class CountFlow(Simple):
             (bool, 'slice', 'slice')]
 
     def load(self, ips):
+        CountFlow.view[0] = (list, 'model', cellpp.list_models(), str, 'model', '')
         CountFlow.view[1] = (list, 'cytoplasm', list(range(ips.channels)), int, 'cytoplasm', 'channel')
         CountFlow.view[2] = (list, 'nucleus', list(range(ips.channels)), int, 'nucleus', 'channel')
         return True
@@ -51,7 +52,7 @@ class CountFlow(Simple):
             img = imgs[i].astype(np.float32)/255
             flowpb, style = cellpp.get_flow(net, img, cn=[para['cytoplasm'], para['nucleus']],
                 sample=para['zoom'], size=para['size'], tile=para['tile'], work=para['work'],
-                callback=lambda a,b,n=len(imgs): self.progress(i*a+b,n*a))
+                callback=lambda a,b,n=len(imgs): self.progress(n*a, i*a+b))
             flowpb = cellpp.asnumpy(flowpb)
             flows.append(flowpb)
             if para['rainbow']: rainbow.append(cellpp.flow2hsv(flowpb))

@@ -167,17 +167,30 @@ if you want to share your model in cellpose-planer, just upload the json and npy
 ## models list
 | model name | auther | description | url |
 | --- | --- | --- | --- |
-| cyto_0  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/cyto_0.npy) |
-| cyto_1  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/cyto_1.npy) |
-| cyto_2  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/cyto_2.npy) |
-| cyto_3  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/cyto_3.npy) |
-| nuclei_0  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/nuclei_0.npy) |
-| nuclei_1  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/nuclei_1.npy) |
-| nuclei_2  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/nuclei_2.npy) |
-| nuclei_3  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](http://release.imagepy.org/cellpose-planer/nuclei_3.npy) |
+| cyto_0  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641172/download/cyto_0.pla) |
+| cyto_1  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641173/download/cyto_1.pla) |
+| cyto_2  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641174/download/cyto_2.pla) |
+| cyto_3  | carsen-stringer | [for cell cyto segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641175/download/cyto_3.pla) |
+| nuclei_0  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641176/download/nuclei_0.pla) |
+| nuclei_1  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641177/download/nuclei_1.pla) |
+| nuclei_2  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641178/download/nuclei_2.pla) |
+| nuclei_3  | carsen-stringer | [for cell nuclear segmentation](http://www.cellpose.org/) | [download](https://gitee.com/imagepy/cellpose-planer/attach_files/641179/download/nuclei_3.pla) |
 
  *cellpp.search_models function pull the text below and parse them, welcom to release your models here!*
 
- ## Use cellpose-planer as ImagePy plugins
- cellpose-planer can also start as ImagePy's plugins. supporting interactive and bat processing.
- ![image](https://user-images.githubusercontent.com/24822467/111069844-ce339000-8483-11eb-9dce-caa8f6ab80af.png)
+## Use cellpose-planer as ImagePy plugins
+
+**Path:** https://gitee.com/imagepy/cellpose-planer
+
+**Version:** 0.1
+
+**Author:** YXDragon, Y.Dong
+
+**Email:** yxdragon@imagepy.org
+
+**Keyword:** cellpose, segment, unet
+
+**Description:** cellpose on planer framework for imagepy.
+
+cellpose-planer can also start as ImagePy's plugins. supporting interactive and bat processing.
+![image](https://user-images.githubusercontent.com/24822467/111069844-ce339000-8483-11eb-9dce-caa8f6ab80af.png)

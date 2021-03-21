@@ -36,6 +36,7 @@ MANIFEST
 # weights files
 *.npy
 *.json
+*.pla
 
 # Installer logs
 pip-log.txt

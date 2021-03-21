@@ -34,7 +34,7 @@ if not osp.exists(root+'/models'): os.mkdir(root+'/models')
 models = {}
 
 def search_models():
-    url = 'http://release.imagepy.org/cellpose-planer/README.md'
+    url = 'https://gitee.com/imagepy/cellpose-planer/raw/main/README.md'
     lines = urlopen(url).read().decode('utf-8').split('\n')
     global models
     for line in lines:
@@ -43,30 +43,30 @@ def search_models():
         url = ss[-2].split('(')[-1].split(')')[0]
         name = osp.split(url)[1]
         models[ss[1].strip()] = url
-    fs = glob(root+'/models/*.npy')
+    fs = glob(root+'/models/*.pla')
     has = [osp.split(i)[1][:-4] for i in fs]
     for i in sorted(models):
         print(i, ':', 'installed' if i in has else '--')
     
 def list_models():
-    fs = glob(root+'/models/*.npy')
+    fs = glob(root+'/models/*.pla')
     return [osp.split(i)[1][:-4] for i in fs]
 
-def progress(a, b, c, bar):
-    per = int(min(100.0 * a * b / c, 100))
-    bar.update(round(per)-bar.n)
+def progress(i, n, bar=[None]):
+   if bar[0] is None:
+      bar[0] = tqdm()
+   bar[0].total = n
+   bar[0].update(i-bar[0].n)
+   if n==i: bar[0] = None
 
-def download(names=['cyto_0','cyto_1','cyto_2','cyto_3']):
+def download(names=['cyto_0','nuclei_0'], info=print, progress=progress):
     assert len(models)>0, 'please search_models first!'
     if names=='all': names = list(models.keys())
     if isinstance(names, str): names = [names]
     for name in names:
-        print('download %s from %s'%(name, models[name]))
-        bar = tqdm(total=100)
-        urlretrieve(models[name], root+'/models/'+name+'.npy',
-            lambda a,b,c,bar=bar: progress(a,b,c,bar))
-        urlretrieve(models[name][:-3]+'json',
-                    root+'/models/'+name+'.json')
+        info('download %s from %s'%(name, models[name]))
+        urlretrieve(models[name], root+'/models/'+name+'.pla',
+            lambda a,b,c: progress(int(100.0 * a * b/c), 100))
 
 def test():
     from time import time

@@ -7,7 +7,7 @@ from tqdm import tqdm
 import os.path as osp
 root = osp.abspath(osp.dirname(__file__))
 
-def progress(n, i, bar=[None]):
+def progress(i, n, bar=[None]):
    if bar[0] is None:
       bar[0] = tqdm()
    bar[0].total = n
@@ -66,7 +66,7 @@ def get_flow(nets, img, cn=[0,0], sample=1, size=512, tile=True, work=1, callbac
       style[:] += sty
       count[sr, sc] += 1
       s[0] += 1
-      callback(len(rcs), s[0])
+      callback(s[0], len(rcs))
    if work>1 and len(rcs)>1:
       from concurrent.futures import ThreadPoolExecutor
       pool = ThreadPoolExecutor(max_workers=work, thread_name_prefix="net")
